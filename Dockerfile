@@ -8,16 +8,22 @@ RUN apt-get update && apt-get install -y \
 
 RUN git clone https://github.com/davideperson/privateGPT .
 
+# Print current directory and list its contents
+RUN pwd && ls -la
+
 RUN pip install poetry
 
-# Remove the line that adds openai="0.28.1" to pyproject.toml
-# RUN sed -i '/\[tool\.poetry\.dependencies\]/a openai="0.28.1"' pyproject.toml
+# Try to find pyproject.toml
+RUN find / -name pyproject.toml
 
-# Instead, update pyproject.toml to use a compatible version of openai
-RUN sed -i 's/openai = ".*"/openai = "^1.1.0"/' pyproject.toml
-
-# Update llama-index-core to a compatible version
-RUN sed -i 's/llama-index-core = ".*"/llama-index-core = "^0.10.64"/' pyproject.toml
+# If pyproject.toml exists, proceed with modifications
+RUN if [ -f pyproject.toml ]; then \
+        sed -i 's/openai = ".*"/openai = "^1.1.0"/' pyproject.toml && \
+        sed -i 's/llama-index-core = ".*"/llama-index-core = "^0.10.64"/' pyproject.toml; \
+    else \
+        echo "pyproject.toml not found"; \
+        exit 1; \
+    fi
 
 RUN poetry lock
 RUN poetry install --with ui,local
